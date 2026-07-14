@@ -125,18 +125,18 @@ class IndividualPage extends StatelessWidget {
                               //border: InputBorder.none,
                               prefixIcon: IconButton(
                                 icon: Icon(Icons.emoji_emotions),
-                                onPressed: () {
-                                  // setState(() {
-                                  //   show = !show;
-                                  // });
-                                },
+                                onPressed: () {},
                               ),
                               suffixIcon: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
                                     icon: Icon(Icons.attach_file),
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (Builder)=>);
+                                    },
                                   ),
                                   IconButton(
                                     icon: Icon(Icons.camera_alt),
@@ -173,10 +173,13 @@ class IndividualPage extends StatelessWidget {
       ),
     );
   }
-
+  Widget bottomsheet(){
+    return container();
+  }
+  
   Widget EmojiSelect() {
     return EmojiPicker(
-      onEmojiSelected: (emoji, catagory) {
+      onEmojiSelected: (category, emoji) {
         print(emoji);
       },
     );
