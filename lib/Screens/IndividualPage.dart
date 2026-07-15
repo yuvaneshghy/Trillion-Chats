@@ -123,10 +123,15 @@ class IndividualPage extends StatelessWidget {
                               hintText: "Type a message",
                               contentPadding: EdgeInsets.only(left: 20),
                               //border: InputBorder.none,
-                              prefixIcon: IconButton(
-                                icon: Icon(Icons.emoji_emotions),
-                                onPressed: () {},
-                              ),
+                              // prefixIcon: IconButton(
+                              //   icon: Icon(Icons.emoji_emotions),
+                              //   onPressed: () {
+                              //     showModalBottomSheet(
+                              //       context: context,
+                              //       builder: (context) => EmojiSelect(),
+                              //     );
+                              //   },
+                              // ),
                               suffixIcon: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -134,8 +139,10 @@ class IndividualPage extends StatelessWidget {
                                     icon: Icon(Icons.attach_file),
                                     onPressed: () {
                                       showModalBottomSheet(
+                                        //backgroundColor: Colors.transparent,
                                         context: context,
-                                        builder: (Builder)=>);
+                                        builder: (context) => bottomsheet(),
+                                      );
                                     },
                                   ),
                                   IconButton(
@@ -173,10 +180,68 @@ class IndividualPage extends StatelessWidget {
       ),
     );
   }
-  Widget bottomsheet(){
-    return container();
+
+  Widget bottomsheet() {
+    return Container(
+      height: 170,
+
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                iconcreation(
+                  Icons.insert_drive_file,
+                  "Document",
+                  Color.fromARGB(255, 255, 230, 0),
+                ),
+                SizedBox(width: 30),
+                iconcreation(
+                  Icons.camera_alt,
+                  "Camera",
+                  Color.fromARGB(255, 255, 230, 0),
+                ),
+                SizedBox(width: 30),
+                iconcreation(
+                  Icons.insert_photo,
+                  "Gallery",
+                  Color.fromARGB(255, 255, 230, 0),
+                ),
+                SizedBox(width: 30),
+                iconcreation(
+                  Icons.audio_file,
+                  "Audio",
+                  Color.fromARGB(255, 255, 230, 0),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      // width: MediaQuery.of(context).size.width,
+      //child: Card(margin: EdgeInsets.all(18)),
+    );
   }
-  
+
+  Widget iconcreation(IconData icon, String text, Color color) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 30,
+          backgroundColor: color,
+          child: IconButton(
+            icon: Icon(icon, color: Color.fromARGB(255, 58, 51, 1)),
+            onPressed: () {},
+          ),
+        ),
+        SizedBox(height: 5),
+        Text(text, style: TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
   Widget EmojiSelect() {
     return EmojiPicker(
       onEmojiSelected: (category, emoji) {
