@@ -1,26 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/Model/ContactModel.dart';
+import 'package:flutter_application_1/Theme/AppColors.dart';
+import 'AppAvatar.dart';
 
-class ContactCard extends StatefulWidget {
-  const ContactCard({required Key key}) : super(key: key);
+class ContactCard extends StatelessWidget {
+  final ContactModel contact;
+  final bool selected;
+  final VoidCallback? onTap;
+  final bool showCheck;
 
-  @override
-  _ContactCardState createState() => _ContactCardState();
-}
+  const ContactCard({
+    super.key,
+    required this.contact,
+    this.selected = false,
+    this.onTap,
+    this.showCheck = false,
+  });
 
-class _ContactCardState extends State<ContactCard> {
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        radius: 30,
-        backgroundColor: Color.fromARGB(255, 94, 84, 2),
-        child: Icon(Icons.person, color: Colors.white),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: selected ? AppColors.menu.withValues(alpha: 0.35) : null,
+        child: ListTile(
+          leading: AppAvatar(
+            name: contact.name,
+            isGroup: false,
+            color: contact.color,
+            radius: 24,
+          ),
+          title: Text(
+            contact.name,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(
+            contact.status,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14),
+          ),
+          trailing: showCheck
+              ? Icon(
+                  selected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: selected ? AppColors.whatsappGreen : AppColors.grey,
+                )
+              : null,
+        ),
       ),
-      title: Text(
-        "Contact Name",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text("Last message preview"),
     );
   }
 }
