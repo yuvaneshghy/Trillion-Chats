@@ -35,15 +35,17 @@ class _CreateGroupState extends State<CreateGroup> {
         .toList();
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'New group',
-          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
           TextButton(
@@ -62,8 +64,7 @@ class _CreateGroupState extends State<CreateGroup> {
               'Next',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: _selected.isEmpty ? AppColors.grey : Colors.black,
+                color: _selected.isEmpty ? Colors.white54 : Colors.white,
               ),
             ),
           ),
@@ -95,7 +96,7 @@ class _CreateGroupState extends State<CreateGroup> {
                         Text(
                           c.name,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11),
+                          style: const TextStyle(fontSize: 11, color: Colors.white),
                         ),
                       ],
                     ),
@@ -107,11 +108,13 @@ class _CreateGroupState extends State<CreateGroup> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
               onChanged: (value) => setState(() => _query = value),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search contacts',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Colors.white10,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(

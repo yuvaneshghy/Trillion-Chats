@@ -41,15 +41,17 @@ class _CreateGroupInfoPageState extends State<CreateGroupInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'New group',
-          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
           TextButton(
@@ -58,8 +60,7 @@ class _CreateGroupInfoPageState extends State<CreateGroupInfoPage> {
               'Create',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: Colors.white,
               ),
             ),
           ),

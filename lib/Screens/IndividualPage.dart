@@ -1,8 +1,11 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_application_1/Model/MessageModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/CustomUI/AppAvatar.dart';
 import 'package:flutter_application_1/CustomUI/MessageBubble.dart';
-import 'package:flutter_application_1/CustomUI/WallpaperPainter.dart';
+import 'package:flutter_application_1/CustomUI/GlassContainer.dart';
 import 'package:flutter_application_1/Model/ChatModel.dart';
 import 'package:flutter_application_1/Screens/GroupInfoPage.dart';
 import 'package:flutter_application_1/State/AppState.dart';
@@ -96,14 +99,21 @@ class _IndividualPageState extends State<IndividualPage> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: AppColors.primaryDark,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      flexibleSpace: const GlassContainer(
+        blur: 15,
+        opacity: 0.1,
+        borderRadius: BorderRadius.zero,
+        child: SizedBox.expand(),
+      ),
       leadingWidth: 100,
       leading: InkWell(
         onTap: () => Navigator.pop(context),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.arrow_back, size: 30, color: Colors.black),
+            const Icon(Icons.arrow_back, size: 30, color: Colors.white),
             const SizedBox(width: 8),
             AppAvatar(
               name: _chat.name,
@@ -120,19 +130,19 @@ class _IndividualPageState extends State<IndividualPage> {
           Text(
             _chat.name,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 18, color: Colors.black),
+            style: const TextStyle(fontSize: 18, color: Colors.white),
           ),
           const SizedBox(height: 3),
           Text(
             _chat.lastSeen,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: Colors.black),
+            style: const TextStyle(fontSize: 13, color: Colors.white70),
           ),
         ],
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.video_call, color: Colors.black),
+          icon: const Icon(Icons.video_call, color: Colors.white),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -143,7 +153,7 @@ class _IndividualPageState extends State<IndividualPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.call, color: Colors.black),
+          icon: const Icon(Icons.call, color: Colors.white),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -154,6 +164,7 @@ class _IndividualPageState extends State<IndividualPage> {
           },
         ),
         PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
           color: AppColors.menu,
           onSelected: (value) {
             if (value == 'View Contact') {
@@ -182,10 +193,19 @@ class _IndividualPageState extends State<IndividualPage> {
             }
           },
           itemBuilder: (context) => [
-            PopupMenuItem(value: 'View Contact', child: Text(_chat.isGroup ? 'View Group Info' : 'View Contact')),
-            const PopupMenuItem(value: 'Media, Links and Docs', child: Text('Media, Links and Docs')),
+            PopupMenuItem(
+              value: 'View Contact',
+              child: Text(_chat.isGroup ? 'View Group Info' : 'View Contact'),
+            ),
+            const PopupMenuItem(
+              value: 'Media, Links and Docs',
+              child: Text('Media, Links and Docs'),
+            ),
             const PopupMenuItem(value: 'Search', child: Text('Search')),
-            const PopupMenuItem(value: 'Mute Notifications', child: Text('Mute Notifications')),
+            const PopupMenuItem(
+              value: 'Mute Notifications',
+              child: Text('Mute Notifications'),
+            ),
             const PopupMenuItem(value: 'Wallpaper', child: Text('Wallpaper')),
             const PopupMenuItem(value: 'More', child: Text('More')),
           ],
@@ -196,25 +216,26 @@ class _IndividualPageState extends State<IndividualPage> {
 
   Widget _buildMessages() {
     return Container(
-      color: AppColors.background,
-      child: CustomPaint(
-        painter: WallpaperPainter(),
-        child: ListenableBuilder(
-          listenable: AppState.instance,
-          builder: (context, _) {
-            final messages = _chat.messages;
-            return ListView.builder(
-              controller: _scroll,
-              reverse: true,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[messages.length - 1 - index];
-                return MessageBubble(message: message);
-              },
-            );
-          },
-        ),
+      color: Colors.transparent,
+      child: ListenableBuilder(
+        listenable: AppState.instance,
+        builder: (context, _) {
+          final updatedChat = AppState.instance.chats.firstWhere(
+            (c) => c.name == _chat.name && c.isGroup == _chat.isGroup,
+            orElse: () => _chat,
+          );
+          final messages = updatedChat.messages;
+          return ListView.builder(
+            controller: _scroll,
+            reverse: true,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              final message = messages[messages.length - 1 - index];
+              return MessageBubble(message: message);
+            },
+          );
+        },
       ),
     );
   }
@@ -224,41 +245,35 @@ class _IndividualPageState extends State<IndividualPage> {
       height: 300,
       child: EmojiPicker(
         textEditingController: _controller,
-        config: const Config(
-          height: 300,
-          checkPlatformCompatibility: false,
-        ),
+        config: const Config(height: 300, checkPlatformCompatibility: false),
       ),
     );
   }
 
   Widget _buildInputBar() {
     final hasText = _controller.text.trim().isNotEmpty;
-    return Container(
-      color: const Color(0xFFF5F1DF),
-      padding: EdgeInsets.only(
+    return GlassContainer(
+      margin: EdgeInsets.only(
         left: 4,
         right: 4,
         top: 6,
         bottom: MediaQuery.of(context).viewInsets.bottom + 6,
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      borderRadius: BorderRadius.circular(30),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           IconButton(
             icon: Icon(
               _showEmoji ? Icons.keyboard : Icons.emoji_emotions,
-              color: AppColors.grey,
+              color: Colors.white,
             ),
             onPressed: _toggleEmoji,
           ),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-              ),
               child: Row(
                 children: [
                   Expanded(
@@ -269,23 +284,27 @@ class _IndividualPageState extends State<IndividualPage> {
                       maxLines: 4,
                       keyboardType: TextInputType.multiline,
                       textInputAction: TextInputAction.newline,
+                      style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Message',
+                        hintStyle: TextStyle(color: Colors.white54),
                         isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
                   if (!hasText) ...[
                     IconButton(
-                      icon: const Icon(Icons.attach_file, color: AppColors.grey),
+                      icon: const Icon(
+                        Icons.attach_file,
+                        color: Colors.white,
+                      ),
                       onPressed: _toggleAttach,
                     ),
                     IconButton(
-                      icon: const Icon(Icons.camera_alt, color: AppColors.grey),
+                      icon: const Icon(Icons.camera_alt, color: Colors.white),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -304,12 +323,12 @@ class _IndividualPageState extends State<IndividualPage> {
             padding: const EdgeInsets.only(left: 4, bottom: 0),
             child: CircleAvatar(
               radius: 24,
-              backgroundColor: AppColors.primary,
+              backgroundColor: Colors.white24,
               child: IconButton(
                 onPressed: hasText ? _sendMessage : null,
                 icon: Icon(
                   hasText ? Icons.send : Icons.mic,
-                  color: hasText ? Colors.black : AppColors.darkGrey,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -323,7 +342,7 @@ class _IndividualPageState extends State<IndividualPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Expanded(child: _buildMessages()),
@@ -338,6 +357,33 @@ class _IndividualPageState extends State<IndividualPage> {
 class _AttachmentSheet extends StatelessWidget {
   final ChatModel chat;
   const _AttachmentSheet({required this.chat});
+
+  Future<void> _pickImage(BuildContext context, ImageSource source) async {
+    Navigator.pop(context);
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+    if (pickedFile != null) {
+      AppState.instance.sendMediaMessage(
+        chat,
+        pickedFile.path,
+        MessageType.image,
+      );
+    }
+  }
+
+  Future<void> _pickDocument(BuildContext context) async {
+    Navigator.pop(context);
+    final result = await FilePicker.pickFiles();
+    // ignore: unnecessary_null_comparison
+    if (result != null && result.isNotEmpty && result.single.path != null) {
+      AppState.instance.sendMediaMessage(
+        chat,
+        result.single.path!,
+        MessageType.document,
+        text: result.single.name,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -362,19 +408,19 @@ class _AttachmentSheet extends StatelessWidget {
                   icon: Icons.insert_drive_file,
                   label: 'Document',
                   color: AppColors.whatsappGreen,
-                  onTap: () => _demo(context),
+                  onTap: () => _pickDocument(context),
                 ),
                 _SheetIcon(
                   icon: Icons.camera_alt,
                   label: 'Camera',
                   color: AppColors.chatGreen,
-                  onTap: () => _demo(context),
+                  onTap: () => _pickImage(context, ImageSource.camera),
                 ),
                 _SheetIcon(
                   icon: Icons.insert_photo,
                   label: 'Gallery',
                   color: const Color(0xFFF57C00),
-                  onTap: () => _demo(context),
+                  onTap: () => _pickImage(context, ImageSource.gallery),
                 ),
                 _SheetIcon(
                   icon: Icons.audio_file,
@@ -422,10 +468,9 @@ class _AttachmentSheet extends StatelessWidget {
 
   void _demo(BuildContext context) {
     Navigator.pop(context);
-    AppState.instance.sendMessage(chat, 'Media sent (demo)');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Media sent (demo)'),
+        content: Text('Not fully implemented yet (demo)'),
         duration: Duration(seconds: 1),
       ),
     );

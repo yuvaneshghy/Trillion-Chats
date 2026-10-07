@@ -11,11 +11,14 @@ class GroupInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Group info',
-          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
       body: ListView(
@@ -34,7 +37,7 @@ class GroupInfoPage extends StatelessWidget {
             child: Text(
               chat.name,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
           const SizedBox(height: 4),
@@ -60,7 +63,7 @@ class GroupInfoPage extends StatelessWidget {
     );
   }
 
-  Widget _option(IconData icon, String title, {Color color = Colors.black}) {
+  Widget _option(IconData icon, String title, {Color color = Colors.white}) {
     return ListTile(
       leading: Icon(icon, color: color),
       title: Text(title, style: TextStyle(color: color)),

@@ -8,6 +8,7 @@ import 'package:flutter_application_1/Screens/SettingsPage.dart';
 import 'package:flutter_application_1/Screens/SelectContact.dart';
 import 'package:flutter_application_1/State/AppState.dart';
 import 'package:flutter_application_1/Theme/AppColors.dart';
+import 'package:flutter_application_1/CustomUI/GlassContainer.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -183,21 +184,21 @@ class _HomeScreenState extends State<Homescreen>
             );
           },
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.black,
+          foregroundColor: Colors.white,
           child: const Icon(Icons.message),
         );
       case 2:
         return FloatingActionButton(
           onPressed: _statusOptions,
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.black,
+          foregroundColor: Colors.white,
           child: const Icon(Icons.photo_camera),
         );
       case 3:
         return FloatingActionButton(
           onPressed: _newCall,
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.black,
+          foregroundColor: Colors.white,
           child: const Icon(Icons.add_call),
         );
       default:
@@ -208,14 +209,24 @@ class _HomeScreenState extends State<Homescreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: const GlassContainer(
+          blur: 15,
+          opacity: 0.1,
+          borderRadius: BorderRadius.zero,
+          child: SizedBox.expand(),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           _titles[_controller.index],
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {
               if (_controller.index == 1) return;
               ScaffoldMessenger.of(context).showSnackBar(
@@ -227,6 +238,7 @@ class _HomeScreenState extends State<Homescreen>
             },
           ),
           PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
             color: AppColors.menu,
             onSelected: (value) {
               switch (value) {
@@ -260,13 +272,11 @@ class _HomeScreenState extends State<Homescreen>
             ],
           ),
         ],
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(5)),
-        ),
-        backgroundColor: AppColors.primary,
         bottom: TabBar(
           controller: _controller,
-          indicatorColor: AppColors.accent,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white60,
           tabs: const [
             Tab(icon: Icon(Icons.camera_alt)),
             Tab(text: 'CHATS'),
@@ -285,7 +295,6 @@ class _HomeScreenState extends State<Homescreen>
         ],
       ),
       floatingActionButton: _fab(),
-      backgroundColor: AppColors.background,
     );
   }
 }

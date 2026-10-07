@@ -3,6 +3,7 @@ import 'package:flutter_application_1/CustomUI/AppAvatar.dart';
 import 'package:flutter_application_1/Model/CallModel.dart';
 import 'package:flutter_application_1/State/AppState.dart';
 import 'package:flutter_application_1/Theme/AppColors.dart';
+import 'package:flutter_application_1/CustomUI/GlassContainer.dart';
 
 class CallsPage extends StatelessWidget {
   const CallsPage({super.key});
@@ -36,33 +37,38 @@ class _CallTile extends StatelessWidget {
         : AppColors.whatsappGreen;
     final callIcon = call.isMissed ? Icons.arrow_downward : Icons.arrow_upward;
 
-    return ListTile(
-      leading: AppAvatar(
-        name: call.name,
-        isGroup: false,
-        color: call.color,
-        radius: 24,
-      ),
-      title: Text(
-        call.name,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-      subtitle: Row(
-        children: [
-          Icon(callIcon, color: iconColor, size: 16),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              call.time,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14),
+    return GlassContainer(
+      interactive: true,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: AppAvatar(
+          name: call.name,
+          isGroup: false,
+          color: call.color,
+          radius: 24,
+        ),
+        title: Text(
+          call.name,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+        subtitle: Row(
+          children: [
+            Icon(callIcon, color: iconColor, size: 16),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                call.time,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
+              ),
             ),
-          ),
-        ],
-      ),
-      trailing: Icon(
-        call.isVideo ? Icons.videocam : Icons.call,
-        color: AppColors.chatGreen,
+          ],
+        ),
+        trailing: Icon(
+          call.isVideo ? Icons.videocam : Icons.call,
+          color: Colors.white70,
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Model/StatusModel.dart';
 import 'package:flutter_application_1/Theme/AppColors.dart';
+import 'package:flutter_application_1/CustomUI/GlassContainer.dart';
 import 'AppAvatar.dart';
 
 class StoryCard extends StatelessWidget {
@@ -11,70 +12,70 @@ class StoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GlassContainer(
+      interactive: true,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Row(
-          children: [
-            if (status.isMyStatus)
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  AppAvatar(
-                    name: status.name,
-                    isGroup: false,
-                    color: status.color,
-                    radius: 26,
-                  ),
-                  const CircleAvatar(
-                    radius: 10,
-                    backgroundColor: AppColors.whatsappGreen,
-                    child: Icon(Icons.add, size: 15, color: Colors.white),
-                  ),
-                ],
-              )
-            else
-              StoryRing(
-                seen: status.isSeen,
-                child: AppAvatar(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Row(
+        children: [
+          if (status.isMyStatus)
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                AppAvatar(
                   name: status.name,
                   isGroup: false,
                   color: status.color,
                   radius: 26,
                 ),
-              ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    status.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    status.time,
-                    style: const TextStyle(fontSize: 13, color: AppColors.grey),
-                  ),
-                ],
+                const CircleAvatar(
+                  radius: 10,
+                  backgroundColor: AppColors.whatsappGreen,
+                  child: Icon(Icons.add, size: 15, color: Colors.white),
+                ),
+              ],
+            )
+          else
+            StoryRing(
+              seen: status.isSeen,
+              child: AppAvatar(
+                name: status.name,
+                isGroup: false,
+                color: status.color,
+                radius: 26,
               ),
             ),
-            if (status.isMyStatus)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.photo_camera,
-                      color: AppColors.whatsappGreen, size: 22),
-                  SizedBox(width: 20),
-                  Icon(Icons.edit, color: AppColors.whatsappGreen, size: 22),
-                ],
-              ),
-          ],
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  status.time,
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          if (status.isMyStatus)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.photo_camera,
+                    color: Colors.white70, size: 22),
+                SizedBox(width: 20),
+                Icon(Icons.edit, color: Colors.white70, size: 22),
+              ],
+            ),
+        ],
       ),
     );
   }

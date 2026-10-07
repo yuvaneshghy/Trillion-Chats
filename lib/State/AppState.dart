@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Model/MessageModel.dart';
 import '../Model/ChatModel.dart';
 import '../Model/ContactModel.dart';
@@ -17,6 +19,8 @@ class _ServerMessage {
   final String time;
   final double ts;
   bool read;
+  final String type;
+  final String? mediaPath;
 
   _ServerMessage({
     required this.from,
@@ -25,6 +29,8 @@ class _ServerMessage {
     required this.time,
     required this.ts,
     this.read = false,
+    this.type = 'text',
+    this.mediaPath,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,6 +40,8 @@ class _ServerMessage {
         'time': time,
         'ts': ts,
         'read': read,
+        'type': type,
+        'mediaPath': mediaPath,
       };
 
   factory _ServerMessage.fromJson(Map<String, dynamic> json) {
@@ -44,15 +52,14 @@ class _ServerMessage {
       time: json['time'] as String,
       ts: (json['ts'] as num).toDouble(),
       read: json['read'] == true,
+      type: json['type'] as String? ?? 'text',
+      mediaPath: json['mediaPath'] as String?,
     );
   }
 }
 
 class AppState extends ChangeNotifier {
-  AppState._() {
-    _seedCalls();
-    _seedStatuses();
-  }
+  AppState._();
 
   static final AppState instance = AppState._();
 
@@ -62,7 +69,7 @@ class AppState extends ChangeNotifier {
   final Map<String, ChatModel> _conversations = {};
   final List<ChatModel> _localGroups = [];
   final List<CallModel> _calls = [];
-  final List<StatusModel> _statuses = [];
+  late final List<StatusModel> _statuses = [_myStatus];
   final StatusModel _myStatus = StatusModel(
     name: 'My status',
     time: 'Today, 7:30 AM',
@@ -93,65 +100,57 @@ class AppState extends ChangeNotifier {
   List<CallModel> get calls => List.unmodifiable(_calls);
   List<StatusModel> get statuses => List.unmodifiable(_statuses);
 
+  StreamSubscription? _usersSub;
+  StreamSubscription? _msgsSub;
+
   Future<void> init() async {
-    final prefs = await SharedPreferences.getInstance();
     _currentUser = null;
     _users.clear();
     _messages.clear();
     _conversations.clear();
     _localGroups.clear();
 
-    final usersJson = prefs.getString('tc_users');
-    if (usersJson == null || usersJson.isEmpty) {
-      _seedUsers();
-      await _persistUsers();
-    } else {
-      for (final j in jsonDecode(usersJson) as List) {
-        _users.add(UserModel.fromJson(j as Map<String, dynamic>));
-      }
-    }
-
-    final messagesJson = prefs.getString('tc_messages');
-    if (messagesJson == null || messagesJson.isEmpty) {
-      _seedMessages();
-      await _persistMessages();
-    } else {
-      for (final j in jsonDecode(messagesJson) as List) {
-        final m = _ServerMessage.fromJson(j as Map<String, dynamic>);
-        _messages.putIfAbsent(_pairKey(m.from, m.to), () => []).add(m);
-      }
-    }
-
-    final groupsJson = prefs.getString('tc_groups');
-    if (groupsJson != null && groupsJson.isNotEmpty) {
-      for (final j in jsonDecode(groupsJson) as List) {
-        final map = j as Map<String, dynamic>;
-        final chat = ChatModel(
-          name: map['name'] as String,
-          isGroup: true,
-          avatarColor: Color(map['color'] as int),
-          messages: (map['messages'] as List)
-              .map((mm) => MessageModel(
-                    text: (mm as Map<String, dynamic>)['text'] as String,
-                    time: mm['time'] as String,
-                    isSentByMe: mm['me'] == true,
-                  ))
-              .toList(),
-        );
-        chat.lastTs = (map['lastTs'] as num?)?.toDouble() ?? 0;
-        _localGroups.add(chat);
-      }
-    }
-
-    final session = prefs.getString('tc_session');
-    if (session != null) {
-      final user = _findUser(session);
+    // Listen to Firebase Authentication state changes
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (user != null) {
-        _currentUser = user;
-        _loadConversations();
+        // Fetch current user's profile from Firestore
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          _currentUser = UserModel.fromJson(doc.data()!);
+        }
+
+        // Listen for all users (for contacts list)
+        _usersSub?.cancel();
+        _usersSub = FirebaseFirestore.instance.collection('users').snapshots().listen((snap) {
+          _users.clear();
+          for (var uDoc in snap.docs) {
+            _users.add(UserModel.fromJson(uDoc.data()));
+          }
+          notifyListeners();
+        });
+
+        // Listen for all messages (in a real app, you'd only listen to messages where user is sender or receiver)
+        _msgsSub?.cancel();
+        _msgsSub = FirebaseFirestore.instance.collection('messages').orderBy('ts').snapshots().listen((snap) {
+          _messages.clear();
+          for (var mDoc in snap.docs) {
+            final m = _ServerMessage.fromJson(mDoc.data());
+            _messages.putIfAbsent(_pairKey(m.from, m.to), () => []).add(m);
+          }
+          _loadConversations();
+          notifyListeners();
+        });
+      } else {
+        // User logged out
+        _currentUser = null;
+        _usersSub?.cancel();
+        _msgsSub?.cancel();
+        _users.clear();
+        _messages.clear();
+        _conversations.clear();
+        notifyListeners();
       }
-    }
-    notifyListeners();
+    });
   }
 
   UserModel? _findUser(String username) {
@@ -212,13 +211,18 @@ class AppState extends ChangeNotifier {
       isGroup: false,
       avatarColor: user.color,
       messages: msgs
-          .map((m) => MessageModel(
-                text: m.text,
-                time: m.time,
-                isSentByMe:
-                    m.from.toLowerCase() == _currentUser!.username.toLowerCase(),
-                read: m.read,
-              ))
+          .map((m) {
+                final msgType = MessageType.values.firstWhere((e) => e.name == m.type, orElse: () => MessageType.text);
+                return MessageModel(
+                  text: m.text,
+                  time: m.time,
+                  isSentByMe:
+                      m.from.toLowerCase() == _currentUser!.username.toLowerCase(),
+                  read: m.read,
+                  type: msgType,
+                  mediaPath: m.mediaPath,
+                );
+              })
           .toList(),
       lastSeen: 'online',
     );
@@ -235,36 +239,36 @@ class AppState extends ChangeNotifier {
   // ---------- Auth ----------
 
   Future<bool> login(String username, String password) async {
-    final user = _findUser(username);
-    if (user == null || user.password != password) return false;
-    _currentUser = user;
-    _loadConversations();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('tc_session', user.username);
-    notifyListeners();
-    return true;
+    try {
+      final email = '$username@trillionchats.com';
+      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      // The authStateChanges listener in init() will handle the rest
+      return true;
+    } catch (e) {
+      debugPrint('Login error: $e');
+      return false;
+    }
   }
 
   Future<bool> signup(String username, String password) async {
     final name = username.trim();
-    if (name.isEmpty || _findUser(name) != null) return false;
-    final user = UserModel(username: name, password: password);
-    _users.add(user);
-    _currentUser = user;
-    _loadConversations();
-    await _persistUsers();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('tc_session', user.username);
-    notifyListeners();
-    return true;
+    if (name.isEmpty) return false;
+    try {
+      final email = '$name@trillionchats.com';
+      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      
+      final user = UserModel(username: name, password: password);
+      await FirebaseFirestore.instance.collection('users').doc(cred.user!.uid).set(user.toJson());
+      // The authStateChanges listener in init() will handle the rest
+      return true;
+    } catch (e) {
+      debugPrint('Signup error: $e');
+      return false;
+    }
   }
 
   Future<void> logout() async {
-    _currentUser = null;
-    _conversations.clear();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('tc_session');
-    notifyListeners();
+    await FirebaseAuth.instance.signOut();
   }
 
   List<UserModel> searchUsers(String query) {
@@ -328,41 +332,44 @@ class AppState extends ChangeNotifier {
       unawaited(_persistGroups());
     } else {
       final me = _currentUser!.username;
-      final key = _pairKey(me, chat.name);
-      _messages.putIfAbsent(key, () => []).add(
-            _ServerMessage(from: me, to: chat.name, text: text, time: display, ts: ts),
-          );
-      chat.messages
-          .add(MessageModel(text: text, time: display, isSentByMe: true));
-      chat.lastTs = ts;
-      unawaited(_persistMessages());
+      final msg = _ServerMessage(from: me, to: chat.name, text: text, time: display, ts: ts);
+      FirebaseFirestore.instance.collection('messages').add(msg.toJson());
     }
     chat.unreadCount = 0;
     _moveToTop(chat);
     notifyListeners();
   }
 
-  void markChatRead(ChatModel chat) {
-    if (chat.isGroup || _currentUser == null) return;
-    var changed = false;
-    final key = _pairKey(_currentUser!.username, chat.name);
-    final msgs = _messages[key];
-    if (msgs != null) {
-      for (final m in msgs) {
-        if (m.from.toLowerCase() != _currentUser!.username.toLowerCase() &&
-            !m.read) {
-          m.read = true;
-          changed = true;
-        }
-      }
+  void sendMediaMessage(ChatModel chat, String path, MessageType type, {String text = ''}) {
+    final ts = _now();
+    final display = _fmtTime(ts);
+    if (chat.isGroup) {
+      chat.messages
+          .add(MessageModel(text: text, time: display, isSentByMe: true, type: type, mediaPath: path));
+      chat.lastTs = ts;
+      unawaited(_persistGroups());
+    } else {
+      final me = _currentUser!.username;
+      final msg = _ServerMessage(from: me, to: chat.name, text: text, time: display, ts: ts, type: type.name, mediaPath: path);
+      FirebaseFirestore.instance.collection('messages').add(msg.toJson());
     }
-    if (changed) {
-      for (final m in chat.messages) {
-        if (!m.isSentByMe && !m.read) m.read = true;
-      }
-      chat.unreadCount = 0;
-      unawaited(_persistMessages());
-      notifyListeners();
+    chat.unreadCount = 0;
+    _moveToTop(chat);
+    notifyListeners();
+  }
+
+  void markChatRead(ChatModel chat) async {
+    if (chat.isGroup || _currentUser == null) return;
+    
+    // Find unread messages where the current user is the receiver
+    final unreadQuery = await FirebaseFirestore.instance.collection('messages')
+      .where('to', isEqualTo: _currentUser!.username)
+      .where('from', isEqualTo: chat.name)
+      .where('read', isEqualTo: false)
+      .get();
+      
+    for (var doc in unreadQuery.docs) {
+      doc.reference.update({'read': true});
     }
   }
 
@@ -406,24 +413,6 @@ class AppState extends ChangeNotifier {
 
   // ---------- Persistence ----------
 
-  Future<void> _persistUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'tc_users',
-      jsonEncode(_users.map((u) => u.toJson()).toList()),
-    );
-  }
-
-  Future<void> _persistMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    final all = <Map<String, dynamic>>[];
-    _messages.forEach((key, msgs) {
-      for (final m in msgs) {
-        all.add(m.toJson());
-      }
-    });
-    await prefs.setString('tc_messages', jsonEncode(all));
-  }
 
   Future<void> _persistGroups() async {
     final prefs = await SharedPreferences.getInstance();
@@ -434,96 +423,12 @@ class AppState extends ChangeNotifier {
         'lastTs': g.lastTs,
         'messages': g.messages
             .map((m) =>
-                {'text': m.text, 'time': m.time, 'me': m.isSentByMe})
+                {'text': m.text, 'time': m.time, 'me': m.isSentByMe, 'type': m.type.name, 'mediaPath': m.mediaPath})
             .toList(),
       };
     }).toList();
     await prefs.setString('tc_groups', jsonEncode(list));
   }
 
-  // ---------- Seed data ----------
 
-  void _seedUsers() {
-    const demos = [
-      ('Alice', 'alice123', 'Busy coding'),
-      ('Bob', 'bob123', 'Gym time'),
-      ('Charlie', 'charlie123', 'Traveling'),
-      ('Mom', 'mom123', 'Cooking is love'),
-      ('Rahul', 'rahul123', 'Music on'),
-      ('Sara', 'sara123', 'Designing'),
-    ];
-    for (final d in demos) {
-      _users.add(
-        UserModel(username: d.$1, password: d.$2, status: d.$3),
-      );
-    }
-  }
-
-  void _seedMessages() {
-    void add(String from, String to, String text, double ts,
-        {bool read = false}) {
-      _messages.putIfAbsent(_pairKey(from, to), () => []).add(
-            _ServerMessage(
-              from: from,
-              to: to,
-              text: text,
-              time: _fmtTime(ts),
-              ts: ts,
-              read: read,
-            ),
-          );
-    }
-
-    final now = _now();
-    const min = 60000;
-    add('Bob', 'Alice', 'Hey! Did you see the new Flutter release?', now - 30 * min);
-    add('Alice', 'Bob', "Not yet, what's new?", now - 28 * min);
-    add('Bob', 'Alice', 'Way better performance!', now - 25 * min);
-    add('Mom', 'Alice', 'Are you coming home for dinner?', now - 60 * min);
-    add('Alice', 'Mom', 'Yes mom, on my way!', now - 55 * min);
-    add('Charlie', 'Bob', 'Beach day tomorrow?', now - 120 * min);
-  }
-
-  void _seedCalls() {
-    _calls.addAll([
-      const CallModel(name: 'Alice', time: 'Today, 2:15 PM', isVideo: true, isIncoming: true, isMissed: false, color: Color(0xFFE91E63)),
-      const CallModel(name: 'Bob', time: 'Today, 11:30 AM', isVideo: false, isIncoming: false, isMissed: true, color: Color(0xFF00BCD4)),
-      const CallModel(name: 'Mom', time: 'Yesterday, 6:00 PM', isVideo: true, isIncoming: true, isMissed: false, color: Color(0xFF5E5402)),
-    ]);
-  }
-
-  void _seedStatuses() {
-    _statuses.addAll([
-      _myStatus,
-      StatusModel(
-        name: 'Alice',
-        time: 'Today, 6:45 PM',
-        color: const Color(0xFF00BCD4),
-        gradient: const [Color(0xFF00BCD4), Color(0xFF00838F)],
-        content: 'New coding setup',
-      ),
-      StatusModel(
-        name: 'Mom',
-        time: 'Today, 4:10 PM',
-        color: const Color(0xFFE91E63),
-        gradient: const [Color(0xFFE91E63), Color(0xFF880E4F)],
-        content: 'Made your favourite pasta',
-      ),
-      StatusModel(
-        name: 'Bob',
-        time: 'Yesterday, 8:00 PM',
-        color: const Color(0xFF9C27B0),
-        gradient: const [Color(0xFF9C27B0), Color(0xFF4A148C)],
-        content: 'Gym goals',
-      ),
-      StatusModel(
-        name: 'Charlie',
-        time: 'Yesterday, 1:00 PM',
-        color: const Color(0xFFFF9800),
-        gradient: const [Color(0xFFFF9800), Color(0xFFBF360C)],
-        content: 'Beach day',
-        isSeen: true,
-      ),
-    ]);
-  }
 }

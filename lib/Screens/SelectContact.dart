@@ -42,17 +42,20 @@ class _SelectContactState extends State<SelectContact> {
         .toList();
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
             Text(
               'Select Contact',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             SizedBox(height: 3),
-            Text('Contacts', style: TextStyle(fontSize: 13)),
+            Text('Contacts', style: TextStyle(fontSize: 13, color: Colors.white70)),
           ],
         ),
         actions: [
@@ -75,11 +78,13 @@ class _SelectContactState extends State<SelectContact> {
             child: TextField(
               controller: _search,
               onChanged: (value) => setState(() => _query = value),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search contacts',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Colors.white10,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
@@ -96,7 +101,7 @@ class _SelectContactState extends State<SelectContact> {
             ),
             title: const Text(
               'New group',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
             ),
             onTap: () {
               Navigator.push(

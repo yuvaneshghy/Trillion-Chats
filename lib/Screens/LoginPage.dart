@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
                 const CircleAvatar(
                   radius: 45,
                   backgroundColor: AppColors.primary,
-                  child: Icon(Icons.chat_bubble, size: 48, color: Colors.black),
+                  child: Icon(Icons.chat_bubble, size: 48, color: Colors.black87),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -72,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                   key: const Key('login_username'),
                   controller: _username,
                   textCapitalization: TextCapitalization.none,
+                  style: const TextStyle(color: Colors.white),
                   decoration: _decoration(
                     icon: Icons.person,
                     hint: 'Username',
@@ -82,6 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                   key: const Key('login_password'),
                   controller: _password,
                   obscureText: _obscure,
+                  style: const TextStyle(color: Colors.white),
                   onSubmitted: (_) => _login(),
                   decoration: _decoration(
                     icon: Icons.lock,
@@ -109,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: _loading ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
+                    foregroundColor: Colors.black87,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -175,10 +177,11 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
+      hintStyle: const TextStyle(color: Colors.white54),
       prefixIcon: Icon(icon, color: AppColors.chatGreen),
       suffixIcon: suffix,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Colors.white10,
       contentPadding: const EdgeInsets.symmetric(vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),

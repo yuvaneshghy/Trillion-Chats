@@ -64,11 +64,13 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text(
           'Create account',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
         child: Center(
@@ -132,7 +134,7 @@ class _SignupPageState extends State<SignupPage> {
                   onPressed: _loading ? null : _signup,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
+                    foregroundColor: Colors.black87,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -174,12 +176,14 @@ class _SignupPageState extends State<SignupPage> {
       obscureText: obscure,
       textCapitalization: TextCapitalization.none,
       onSubmitted: (_) => _signup(),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white54),
         prefixIcon: Icon(icon, color: AppColors.chatGreen),
         suffixIcon: suffix,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Colors.white10,
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),

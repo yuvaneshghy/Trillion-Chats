@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Model/ContactModel.dart';
 import 'package:flutter_application_1/Theme/AppColors.dart';
+import 'package:flutter_application_1/CustomUI/GlassContainer.dart';
 import 'AppAvatar.dart';
 
 class ContactCard extends StatelessWidget {
@@ -19,10 +20,13 @@ class ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GlassContainer(
+      interactive: true,
       onTap: onTap,
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Container(
-        color: selected ? AppColors.menu.withValues(alpha: 0.35) : null,
+        color: selected ? Colors.white.withOpacity(0.15) : null,
         child: ListTile(
           leading: AppAvatar(
             name: contact.name,
@@ -32,19 +36,19 @@ class ContactCard extends StatelessWidget {
           ),
           title: Text(
             contact.name,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
           ),
           subtitle: Text(
             contact.status,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 14, color: Colors.white70),
           ),
           trailing: showCheck
               ? Icon(
                   selected
                       ? Icons.check_circle
                       : Icons.radio_button_unchecked,
-                  color: selected ? AppColors.whatsappGreen : AppColors.grey,
+                  color: selected ? AppColors.whatsappGreen : Colors.white54,
                 )
               : null,
         ),
